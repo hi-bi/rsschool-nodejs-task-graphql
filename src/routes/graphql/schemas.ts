@@ -1,10 +1,10 @@
 import { Type } from '@fastify/type-provider-typebox';
-import { GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLNonNull } from 'graphql';
+import { GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLNonNull, GraphQLString, GraphQLScalarType } from 'graphql';
 import { UUIDType } from './types/uuid.js';
 import {MemberTypeId, MemberType} from './types/member-type.js';
-import { CreateUserInput, User } from './types/user.js';
-import { CreatePostInput, Post } from './types/post.js';
-import { CreateProfileInput, Profile } from './types/profile.js';
+import { ChangeUserInput, CreateUserInput, User } from './types/user.js';
+import { ChangePostInput, CreatePostInput, Post } from './types/post.js';
+import { ChangeProfileInput, CreateProfileInput, Profile } from './types/profile.js';
 
 export const gqlResponseSchema = Type.Partial(
   Type.Object({
@@ -172,6 +172,26 @@ const RootMutation = new GraphQLObjectType({
       }
       
     },
+    changePost: {
+      type: Post,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: ChangePostInput }
+      },
+      async resolve (parent, { id, dto: data }, context) {
+        try { 
+          const  res = await context.prisma.post.update({ 
+            where: { id },
+            data
+          });
+
+          return res;
+        } catch {
+          return null;
+        }
+      }
+            
+    },
 
     createUser: {
       type: User,
@@ -201,6 +221,26 @@ const RootMutation = new GraphQLObjectType({
         }
       }
       
+    },
+    changeUser: {
+      type: User,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: ChangeUserInput }
+      },
+      async resolve (parent, { id, dto: data }, context) {
+        try { 
+          const  res = await context.prisma.user.update({ 
+            where: { id },
+            data
+          });
+
+          return res;
+        } catch {
+          return null;
+        }
+      }
+            
     },
 
     createProfile: {
@@ -232,6 +272,71 @@ const RootMutation = new GraphQLObjectType({
       }
       
     },
+    changeProfile: {
+      type: Post,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: ChangeProfileInput }
+      },
+      async resolve (parent, { id, dto: data }, context) {
+        try { 
+          const  res = await context.prisma.profile.update({ 
+            where: { id },
+            data
+          });
+
+          return res;
+        } catch {
+          return null;
+        }
+      }
+            
+    },
+
+    subscribeTo: {
+      type: User,
+      args: {
+        userId: { type: new GraphQLNonNull(UUIDType) },
+        authorId: { type: new GraphQLNonNull(UUIDType) },
+      },
+      async resolve (parent, { userId: id, authorId }, context) {
+        try { 
+
+          const  res = await context.prisma.user.update({ 
+            where: { id },
+            data: { userSubscribedTo: { create: { authorId } } },
+          });
+          
+          return res;
+        } catch {
+          return null;
+        }
+      }
+      
+    },
+
+    unsubscribeFrom: {
+      type: GraphQLString,
+      args: {
+        userId: { type: UUIDType },
+        authorId: { type: UUIDType },
+      },
+      async resolve (parent, { userId: subscriberId, authorId }, context) {
+        try { 
+          const  res = await context.prisma.subscribersOnAuthors.delete({
+            where: { subscriberId_authorId: { subscriberId, authorId } },
+          });
+
+          console.log('unsubscribeFrom delete: ', res, subscriberId, authorId)
+
+          return authorId;
+  
+        } catch {
+          return null;
+        }
+      }
+
+    }
 
   },
 });
