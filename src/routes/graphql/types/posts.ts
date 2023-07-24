@@ -20,7 +20,7 @@ import { GraphQLInputObjectType, GraphQLNonNull,
       })
   });
   
-  export const createPostInput = new GraphQLInputObjectType({
+  export const CreatePostInput = new GraphQLInputObjectType({
     name: 'CreatePostInput',
     fields: () => ({
       title: { 
