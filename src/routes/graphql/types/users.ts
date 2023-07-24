@@ -1,29 +1,76 @@
-import { GraphQLObjectType } from 'graphql';
+import { GraphQLFloat, GraphQLList, GraphQLNonNull, 
+    GraphQLObjectType, GraphQLString } from 'graphql';
 import { UUIDType } from './uuid.js';
-import { GraphQLFloat, GraphQLString } from 'graphql';
 import { Profile } from './profile.js'
+import { Post } from './post.js'; 
 
 export const User = new GraphQLObjectType ({
-    name: 'user',
+    name: 'User',
     fields: () => ({
-      id: {
-        type: UUIDType!
-      },
-      name: {
-        type: GraphQLString
-      },
-      balance: {
-        type: GraphQLFloat
-      },
-      profile: {
+    id: {
+        type: new GraphQLNonNull(UUIDType),
+    },
+    name: {
+        type: new GraphQLNonNull(GraphQLString),
+    },
+    balance: {
+        type: new GraphQLNonNull(GraphQLFloat)
+    },
+
+    profile: {
         type: Profile,
-        resolve: async (source, args, context) => {
-          return await context.prisma.profile.findUnique({
-            where: {id: source.id}
-          });
+        resolve: async (parent, args, context) => {
+        
+            console.log('user.profile: ', parent, args)  
+        
+        return await context.prisma.profile.findFirst({
+            where: {userId: parent.id}
+        });
         },
-      },
-  
-    })
+    },
+
+    posts: {
+        type: new GraphQLList(Post!),
+        resolve: async (parent, args, context) => {
+
+            console.log('user.post: ', parent, args)  
+
+            return await context.prisma.post.findMany({
+            where: {authorId: parent.id}
+        });
+        },
+    },
+
+    userSubscribedTo: {
+        type: new GraphQLList(User!),
+        resolve: async (parent, args, context) => {
+
+            console.log('user.userSubscribedTo: ', parent, args)  
+
+            return await context.prisma.user.findMany({
+                where: { subscribedToUser: { some: { subscriberId: parent.id } } } 
+            })
+        }
+    },
+
+    subscribedToUser: {
+        type: new GraphQLList(User!),
+        resolve: async (parent, args, context) => {
+
+            console.log('user.subscribedToUser: ', parent, args)  
+              
+            return await context.prisma.user.findMany({
+                where: {
+                    userSubscribedTo: {
+                        some: {
+                            authorId: parent.id,
+                        }
+                    }
+                }
+            })
+        }
+
+    },
+
+})
 });
-  
