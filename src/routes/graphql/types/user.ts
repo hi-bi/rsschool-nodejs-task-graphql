@@ -3,6 +3,7 @@ import { GraphQLFloat, GraphQLInputObjectType, GraphQLList, GraphQLNonNull,
 import { UUIDType } from './uuid.js';
 import { Profile } from './profile.js'
 import { Post } from './post.js'; 
+import DataLoader from 'dataloader';
 import { MemberType } from './member-type.js';
 
 export const User = new GraphQLObjectType ({
